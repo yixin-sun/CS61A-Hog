@@ -51,7 +51,7 @@ def take_turn(num_rolls, opponent_score, dice=six_sided):
     assert opponent_score < 100, 'The game should be over.'
     "*** YOUR CODE HERE ***"
     if num_rolls == 0:
-        return (max(opponent_score%10,(opponent_score-5)//10) + 1)
+        return (max(opponent_score%10,opponent_score//10) + 1)
     else:
         return roll_dice(num_rolls, dice=six_sided)
 
@@ -132,7 +132,7 @@ def play(strategy0, strategy1, goal=GOAL_SCORE):
                 opponent_score, score = score, opponent_score
                 print("Swap!")
     print (['final',who,score], ['final',other(who),opponent_score])
-    return {who:score}, {other(who):opponent_score} # You may wish to change this line.
+    return score, opponent_score # You may wish to change this line.
 
 '''IMPORTANT!!! lesson learned !!!
 i+=1 is the same as i=i+1. i=+1 just means i=(+1).'''
@@ -172,7 +172,7 @@ def make_averaged(fn, num_samples=1000):
     feature introduced in this project.  See the project description.
 
     >>> dice = make_test_dice(3, 1, 5, 6)
-    >>> averaged_dice = make_averaged(dice, 1000)
+    >>> averaged_dice = make_averaged(dice, 1000) #averaged_dice is the nested function
     >>> averaged_dice()
     3.75
     >>> make_averaged(roll_dice, 1000)(2, dice)
@@ -184,6 +184,21 @@ def make_averaged(fn, num_samples=1000):
     Thus, the average value is 6.0.
     """
     "*** YOUR CODE HERE ***"
+
+    def averaged_dice(*arg):
+        it, sum_dice = int(1), int(0)
+        while it <= num_samples:
+            sum_dice += fn(*arg)
+            it += 1
+        avg_dice = sum_dice / num_samples
+        return avg_dice
+
+    return averaged_dice
+
+'''hignfn(fn)(x): 把x(*arg)传给fn，那highfn干啥呢？返回fn
+但这个题里面，fn还做了处理———求均值
+'''
+
 
 def max_scoring_num_rolls(dice=six_sided):
     """Return the number of dice (1 to 10) that gives the highest average turn
@@ -205,6 +220,21 @@ def max_scoring_num_rolls(dice=six_sided):
     10
     """
     "*** YOUR CODE HERE ***"
+    for it in range(1,11):
+        avg = int(0)
+        avg = make_averaged(roll_dice,num_samples)(it,dice)
+        avg_mp[it]=avg
+        print(it,"dice scores", avg_mp[it],"on average")
+
+    max_dice = max(avg_mp, key=avg_mp.get)
+    print(max_dice)
+    return max_dice
+'''lesson:
+dictionary:
+avg_mp[it]=avg  是自动append的写法,最后会是{1:3.0, 2:5.0, ...., 10:25.3}
+avg_mp={it:avg} 则是一直刷新的写法，最后会只剩下{10:xx}
+'''
+
 
 def winner(strategy0, strategy1):
     """Return 0 if strategy0 wins against strategy1, and 1 otherwise."""
@@ -214,12 +244,20 @@ def winner(strategy0, strategy1):
     else:
         return 1
 
+'''??????'''
 def average_win_rate(strategy, baseline=always_roll(BASELINE_NUM_ROLLS)):
     """Return the average win rate (0 to 1) of STRATEGY against BASELINE."""
-    win_rate_as_player_0 = 1 - make_averaged(winner)(strategy, baseline)
-    win_rate_as_player_1 = make_averaged(winner)(baseline, strategy)
+    win_rate_as_player_0 = 1 - make_averaged(winner)(strategy, baseline) '''1-p（玩家1·用baseline·取胜）= 1-p（玩家1取胜）=玩家0取胜= 玩家0用strategy取胜'''
+    win_rate_as_player_1 = make_averaged(winner)(baseline, strategy) '''玩家1用strategy取胜'''
     return (win_rate_as_player_0 + win_rate_as_player_1) / 2 # Average results
+    '''作为player0采用STRATEGY的胜率 & 作为player1采用STRATEGY的胜率 求均值'''
 
+# strategy0 = always_roll(1)
+# strategy1 = always_roll(5)
+# make_averaged(winner)(strategy0, strategy1)
+
+
+'''if false?????? 手动改成true吗？？'''
 def run_experiments():
     """Run a series of strategy experiments and report results."""
     if True: # Change to False when done finding max_scoring_num_rolls
@@ -244,6 +282,9 @@ def run_experiments():
 
 # Strategies
 
+BASELINE_NUM_ROLLS = 5
+BACON_MARGIN = 8
+
 def bacon_strategy(score, opponent_score):
     """This strategy rolls 0 dice if that gives at least BACON_MARGIN points,
     and rolls BASELINE_NUM_ROLLS otherwise.
@@ -256,7 +297,12 @@ def bacon_strategy(score, opponent_score):
     0
     """
     "*** YOUR CODE HERE ***"
-    return 5 # Replace this statement
+    points = max((opponent_score//10),(opponent_score%10)) + 1
+    if points >= BACON_MARGIN:
+        return 0
+    else:
+        return BASELINE_NUM_ROLLS
+ # Replace this statement
 
 def swap_strategy(score, opponent_score):
     """This strategy rolls 0 dice when it would result in a beneficial swap and
@@ -274,7 +320,14 @@ def swap_strategy(score, opponent_score):
     5
     """
     "*** YOUR CODE HERE ***"
-    return 5 # Replace this statement
+    points = max((opponent_score//10),(opponent_score%10)) + 1
+    after_p = score + points
+
+    if after_p = 1/2 * opponent_score or points >= BACON_MARGIN:
+        return 0
+    else:
+        return BASELINE_NUM_ROLLS
+     # Replace this statement
 
 def final_strategy(score, opponent_score):
     """Write a brief description of your final strategy.
@@ -282,6 +335,8 @@ def final_strategy(score, opponent_score):
     *** YOUR DESCRIPTION HERE ***
     """
     "*** YOUR CODE HERE ***"
+
+
     return 5 # Replace this statement
 
 
